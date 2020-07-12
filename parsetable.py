@@ -3,12 +3,10 @@ from bs4 import BeautifulSoup
 
 url = 'https://ugatu.su/abitur/ratelist/bachelor/'
 
-
-# скопипастил данные полей ввода. нахуя? пока не знаю
+### may remove later, dunno if i need this
 unit = {'Головной ВУЗ': 1, 'Филиал ФГБОУ ВО "УГАТУ" в г. Ишимбае': 2, 'Филиал ФГБОУ ВО "УГАТУ" в г. Кумертау': 3}
 edform = {'Очная': 1, 'Заочная': 2, 'Очно-заочная': 3}
 EducationLevel = {'Бакалавриат': 'B', 'Специалитет': 'S'}
-# тут абсолюьный бред, потом придумаю как сделать нормально
 specValue = {"168": "01.03.02 Прикладная математика и информатика",
              "169": "01.03.04 Прикладная математика",
              "170": "02.03.01 Математика и компьютерные науки",
@@ -48,8 +46,14 @@ specValue = {"168": "01.03.02 Прикладная математика и ин�
              "212": "38.03.03 Управление персоналом",
              "213": "38.03.04 Государственное и муниципальное управление",
              "214": "38.03.05 Бизнес-информатика"}
+doc = ['Конкурсная ситуация', 'Список поступающих']
+docOsn = ['Бюджет', 'Контракт']
+comment = ["Все", 'общий конкурс', 'без вступительных', 'особое право', 'целевая квота']
 
 
+###
+
+# parsing page to get users
 def get_users(text):
     soup = BeautifulSoup(text, "html.parser")
     data = []
@@ -61,16 +65,17 @@ def get_users(text):
     return data
 
 
-def request_page(curSession):
+# get page text
+def request_page(curSession, payload):
     payload = {'csrfmiddlewaretoken': csrftoken, 'unit': 1, 'edform': edform['Очная'],
                'EducationLevel': EducationLevel['Бакалавриат'], 'specValue': '168', 'doc': doc[0], 'docOsn': docOsn[0],
                'comment': comment[0]}
-    s.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    s.headers['Referer'] = url
+
     r = curSession.post(url, data=payload)
     return r.text
 
 
+# get token through get request
 def set_csrftoken(curSession):
     r = curSession.get(url)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -78,15 +83,13 @@ def set_csrftoken(curSession):
     return token
 
 
-doc = ['Конкурсная ситуация', 'Список поступающих']
-docOsn = ['Бюджет', 'Контракт']
-comment = ["Все", 'общий конкурс', 'без вступительных', 'особое право', 'целевая квота']
-# get cookie for session and csrf token
 s = requests.Session()
+s.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+s.headers['Referer'] = url
+
+
+
+#example
 csrftoken = set_csrftoken(s)
 page_text = request_page(s)
 print(get_users(page_text))
-# надо сделать это не как полный уебан
-# или не надо
-
-
