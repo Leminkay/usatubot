@@ -62,11 +62,21 @@ soup = BeautifulSoup(r.text, "html.parser")
 csrftoken = soup.find_all('input', type='hidden')[0]['value']
 #надо сделать это не как полный уебан
 #или не надо
-payload = {'csrfmiddlewaretoken': csrftoken, 'unit':1, 'edform':edform['Очная'],'EducationLevel':EducationLevel['Бакалавриат'],'specValue':'168','doc':doc[0], 'comment':comment[0] }
+payload = {'csrfmiddlewaretoken': csrftoken, 'unit':1, 'edform':edform['Очная'],'EducationLevel':EducationLevel['Бакалавриат'],'specValue':'168','doc':doc[0],'docOsn':docOsn[0], 'comment':comment[0] }
 s.headers['Content-Type'] = 'application/x-www-form-urlencoded'
 s.headers['Referer'] = url
 r = s.post(url,data = payload)
 print(r.text)
+soup = BeautifulSoup(r.text, "html.parser")
+data = []
+
+rows = soup.find_all('tr')
+for row in rows:
+    cols = row.find_all('td')
+    cols = [col.text.strip() for col in cols]
+    data.append(cols)
+print(data)
+
 
 
 
