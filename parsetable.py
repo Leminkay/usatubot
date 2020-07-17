@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import psycopg2
 
 url = 'https://ugatu.su/abitur/ratelist/bachelor/'
 
@@ -45,7 +46,24 @@ specValue = {"168": "01.03.02 Прикладная математика и ин�
              "211": "38.03.02 Менеджмент",
              "212": "38.03.03 Управление персоналом",
              "213": "38.03.04 Государственное и муниципальное управление",
-             "214": "38.03.05 Бизнес-информатика"}
+             "214": "38.03.05 Бизнес-информатика",
+             "176": "09.05.01 Применение и эксплуатация автоматизированных систем специального назначения",
+             "178": "10.05.05 Безопасность информационных технологий в правоохранительной сфере",
+             "181": "11.05.04 Инфокоммуникационные технологии и системы специальной связи",
+             "187": "13.05.02 Специальные электромеханические системы",
+             "193": "15.05.01 Проектирование технологических машин и комплексов",
+             "195": "20.05.01 Пожарная безопасность",
+             "200": "24.05.02 Проектирование авиационных и ракетных двигателей",
+             "201": "24.05.06 Системы управления летательными аппаратами",
+             "208": "27.05.01 Специальные организационно-технические системы",
+             "215": "38.05.01 Экономическая безопасность",
+             "276": "09.03.03 Прикладная информатика (Ишимбай)",
+             "277": "13.03.02 Электроэнергетика и электротехника",
+             "278": "15.03.04 Автоматизация технологических процессов и производств",
+             "273": "09.03.03 Прикладная информатика (Кумертау)",
+             "274": "15.03.04 Автоматизация технологических процессов и производств",
+             "275": "24.05.06 Системы управления летательными аппаратами"
+             }
 doc = ['Конкурсная ситуация', 'Список поступающих']
 docOsn = ['Бюджет', 'Контракт']
 comment = ["Все", 'общий конкурс', 'без вступительных', 'особое право', 'целевая квота']
@@ -62,13 +80,15 @@ def get_users(text):
         cols = row.find_all('td')
         cols = [col.text.strip() for col in cols]
         data.append(cols)
-    return data
+    print(data[1:])
+    return data[1:]
 
 
 # get page text
-def request_page(curSession, payload):
+def request_page(curSession, specVal):
+    #the only thing that matters in payload is specValue, even if Education Level or unit is not matching
     payload = {'csrfmiddlewaretoken': csrftoken, 'unit': 1, 'edform': edform['Очная'],
-               'EducationLevel': EducationLevel['Бакалавриат'], 'specValue': '168', 'doc': doc[0], 'docOsn': docOsn[0],
+               'EducationLevel': EducationLevel['Бакалавриат'], 'specValue': specVal, 'doc': doc[0], 'docOsn': docOsn[0],
                'comment': comment[0]}
 
     r = curSession.post(url, data=payload)
@@ -88,8 +108,50 @@ s.headers['Content-Type'] = 'application/x-www-form-urlencoded'
 s.headers['Referer'] = url
 
 
-
 #example
 csrftoken = set_csrftoken(s)
-page_text = request_page(s)
-print(get_users(page_text))
+page_text = request_page(s, 168)
+usrs= get_users(page_text)
+print(usrs)
+
+
+def insert_row(abitur, conn, spec, cTime):
+    cur = conn.cursor()
+    # informatics = physics :)
+    agreed = "true"
+    if  abitur[7][:3] == "Нет":
+        agreed = "false"
+    adv = "true"
+    if abitur[8] == "Нет":
+        adv = "false"
+    real = "true"
+    if abitur[9] == "Нет":
+        real = "false"
+    #if abitur[6] == "-":
+     #   abitur[6] = 0
+    for i in range(7):
+        if abitur[i] == "-":
+            abitur[i] = 0
+    cur.execute(
+        "INSERT INTO USATU (name,sum,math,inf,rus,inv, agreed, advantage, original, spec, upd) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        (abitur[1], abitur[2],  abitur[3],  abitur[4],  abitur[5], abitur[6], agreed, adv, real, spec, cTime)
+    )
+
+def insert_all(curSession, conn, cTime):
+    csrftoken = set_csrftoken(curSession)
+    for key in specValue:
+        page_data = request_page(curSession, key)
+        usrs = get_users(page_data)
+        for usr in usrs:
+            insert_row(usr, conn, key, cTime)
+
+
+
+conn = psycopg2.connect(dbname='Bank', user='postgres',password='12345',host='localhost')
+
+cur = conn.cursor()
+
+insert_all(s, conn, -1)
+
+conn.commit()
+conn.close()
