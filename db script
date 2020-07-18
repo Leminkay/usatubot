@@ -1,0 +1,23 @@
+-- Table: public.usatu
+
+-- DROP TABLE public.usatu;
+
+CREATE TABLE public.usatu
+(
+    name character varying COLLATE pg_catalog."default" NOT NULL,
+    sum integer,
+    math integer,
+    inf integer,
+    rus integer,
+    inv integer,
+    agreed boolean,
+    advantage boolean,
+    original boolean,
+    spec character varying COLLATE pg_catalog."default",
+    upd character varying COLLATE pg_catalog."default"
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.usatu
+    OWNER to postgres;

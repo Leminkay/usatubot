@@ -71,6 +71,7 @@ comment = ["Все", 'общий конкурс', 'без вступительн
 
 ###
 
+
 # parsing page to get users
 def get_users(text):
     soup = BeautifulSoup(text, "html.parser")
@@ -78,17 +79,33 @@ def get_users(text):
     rows = soup.find_all('tr')
     for row in rows:
         cols = row.find_all('td')
-        cols = [col.text.strip() for col in cols]
+
+        # cols = [col.text.strip() for col in cols]
+
+        for i in range(len(cols)):
+            cols[i] = cols[i].text.strip()
+
+            if cols[i] == "-":
+                cols[i] = 0
+            if str(cols[i])[:3] == "Нет" and i > 6 :
+                cols[i] = "false"
+            if str(cols[i])[:2] == "Да" and i > 6:
+                cols[i] = "true"
+            #print(cols[i])
+        if cols[10] == 'Без вступительных':
+            cols[2] = 1337
+            cols[8] = 'true'
         data.append(cols)
     print(data[1:])
     return data[1:]
 
 
 # get page text
-def request_page(curSession, specVal):
-    #the only thing that matters in payload is specValue, even if Education Level or unit is not matching
-    payload = {'csrfmiddlewaretoken': csrftoken, 'unit': 1, 'edform': edform['Очная'],
-               'EducationLevel': EducationLevel['Бакалавриат'], 'specValue': specVal, 'doc': doc[0], 'docOsn': docOsn[0],
+def request_page(curSession, specVal, token):
+    # the only thing that matters in payload is specValue, even if Education Level or unit is not matching
+    payload = {'csrfmiddlewaretoken': token, 'unit': 1, 'edform': edform['Очная'],
+               'EducationLevel': EducationLevel['Бакалавриат'], 'specValue': specVal, 'doc': doc[0],
+               'docOsn': docOsn[0],
                'comment': comment[0]}
 
     r = curSession.post(url, data=payload)
@@ -107,47 +124,34 @@ s = requests.Session()
 s.headers['Content-Type'] = 'application/x-www-form-urlencoded'
 s.headers['Referer'] = url
 
-
-#example
+# example
 csrftoken = set_csrftoken(s)
-page_text = request_page(s, 168)
-usrs= get_users(page_text)
-print(usrs)
+page_text = request_page(s, 203, csrftoken)
+usrs = get_users(page_text)
+#print(usrs)
 
 
 def insert_row(abitur, conn, spec, cTime):
     cur = conn.cursor()
     # informatics = physics :)
-    agreed = "true"
-    if  abitur[7][:3] == "Нет":
-        agreed = "false"
-    adv = "true"
-    if abitur[8] == "Нет":
-        adv = "false"
-    real = "true"
-    if abitur[9] == "Нет":
-        real = "false"
-    #if abitur[6] == "-":
-     #   abitur[6] = 0
-    for i in range(7):
-        if abitur[i] == "-":
-            abitur[i] = 0
+
     cur.execute(
         "INSERT INTO USATU (name,sum,math,inf,rus,inv, agreed, advantage, original, spec, upd) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-        (abitur[1], abitur[2],  abitur[3],  abitur[4],  abitur[5], abitur[6], agreed, adv, real, spec, cTime)
+        (abitur[1], abitur[2], abitur[3], abitur[4], abitur[5], abitur[6], abitur[7], abitur[8], abitur[9], spec, cTime)
     )
+
 
 def insert_all(curSession, conn, cTime):
     csrftoken = set_csrftoken(curSession)
     for key in specValue:
-        page_data = request_page(curSession, key)
+        page_data = request_page(curSession, key, csrftoken)
+        print(specValue[key])
         usrs = get_users(page_data)
         for usr in usrs:
             insert_row(usr, conn, key, cTime)
 
 
-
-conn = psycopg2.connect(dbname='Bank', user='postgres',password='12345',host='localhost')
+conn = psycopg2.connect(dbname='Bank', user='postgres', password='12345', host='localhost')
 
 cur = conn.cursor()
 
