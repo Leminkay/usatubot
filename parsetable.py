@@ -70,8 +70,6 @@ comment = ["Все", 'общий конкурс', 'без вступительн
 
 
 ###
-
-
 # parsing page to get users
 def get_users(text):
     soup = BeautifulSoup(text, "html.parser")
@@ -119,7 +117,7 @@ def set_csrftoken(curSession):
     token = soup.find_all('input', type='hidden')[0]['value']
     return token
 
-
+"""
 s = requests.Session()
 s.headers['Content-Type'] = 'application/x-www-form-urlencoded'
 s.headers['Referer'] = url
@@ -128,35 +126,5 @@ s.headers['Referer'] = url
 csrftoken = set_csrftoken(s)
 page_text = request_page(s, 203, csrftoken)
 usrs = get_users(page_text)
-#print(usrs)
-
-
-def insert_row(abitur, conn, spec, cTime):
-    cur = conn.cursor()
-    # informatics = physics :)
-
-    cur.execute(
-        "INSERT INTO USATU (name,sum,math,inf,rus,inv, agreed, advantage, original, spec, upd) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-        (abitur[1], abitur[2], abitur[3], abitur[4], abitur[5], abitur[6], abitur[7], abitur[8], abitur[9], spec, cTime)
-    )
-    conn.commit()
-
-
-def insert_all(curSession, conn, cTime):
-    csrftoken = set_csrftoken(curSession)
-    for key in specValue:
-        page_data = request_page(curSession, key, csrftoken)
-        print(specValue[key])
-        usrs = get_users(page_data)
-        for usr in usrs:
-            insert_row(usr, conn, key, cTime)
-
-
-conn = psycopg2.connect(dbname='Bank', user='postgres', password='12345', host='localhost')
-
-cur = conn.cursor()
-
-insert_all(s, conn, 12313)
-
-
-conn.close()
+print(usrs)
+"""
