@@ -139,6 +139,7 @@ def insert_row(abitur, conn, spec, cTime):
         "INSERT INTO USATU (name,sum,math,inf,rus,inv, agreed, advantage, original, spec, upd) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
         (abitur[1], abitur[2], abitur[3], abitur[4], abitur[5], abitur[6], abitur[7], abitur[8], abitur[9], spec, cTime)
     )
+    conn.commit()
 
 
 def insert_all(curSession, conn, cTime):
@@ -155,7 +156,7 @@ conn = psycopg2.connect(dbname='Bank', user='postgres', password='12345', host='
 
 cur = conn.cursor()
 
-insert_all(s, conn, -1)
+insert_all(s, conn, 12313)
 
-conn.commit()
+
 conn.close()
