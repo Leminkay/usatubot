@@ -4,9 +4,15 @@ import telebot
 import dbstuff
 from parsetable import specValue
 
+def get_position(db, name, spec):
+    specData = db.get_spec_list(spec)
+    for i in range(len(specData)):
+        if specData[i][0] == name:
+            return i + 1
+
+
 
 TOKEN = '1394904859:AAGnS2IQuE3EDOnwI69bCt6HovM-a3U5Luc'
-
 bot = telebot.TeleBot(TOKEN)
 
 
@@ -16,13 +22,15 @@ def help_message(message):
 @bot.message_handler(content_types=['text'])
 def get_name(message):
     db = dbstuff.DbQuery()
-    res = db.find_user(message.text)
-    if len(res) == 0:
-        bot.reply_to(message, "Такой Абитуриент не найдет")
-    else:
-        for us in res:
-            bot.reply_to(message, specValue[us[9]])
-            print(us)
+    result = db.find_user(message.text)
+    answer = ''
+    if len(result) == 0:
 
+        answer = "Такой Абитуриент не найдет"
+    else:
+        for row in result:
+            answer += "\"" + str(specValue[row[9]]) + "\"" + ' место: ' + str(get_position(db, message.text, row[9])) + '\n'
+    bot.reply_to(message, answer)
+#9 for spec
 
 bot.polling()

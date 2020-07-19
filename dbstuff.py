@@ -51,6 +51,5 @@ class DbQuery:
 
 if __name__ == '__main__':
     q = DbQuery()
-    print(len(q.find_user('Латыпова Айсылу Ильдаровна')))
-    print((q.find_user('Латыпова Айсылу Ильдаровна')))
-    q.insert_all(1488)
+    print(q.get_spec_list('168'))
+    print(q.find_user('Симаков Максим Владимирович'))
