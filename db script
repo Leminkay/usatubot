@@ -14,7 +14,7 @@ CREATE TABLE public.usatu
     advantage boolean,
     original boolean,
     spec character varying COLLATE pg_catalog."default",
-    upd timestamp with time zone
+    upd bigint
 )
 
 TABLESPACE pg_default;
