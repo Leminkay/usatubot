@@ -18,8 +18,7 @@ class DbQuery:
         return ans
 
     def get_spec_list(self, spec):
-        self.cur.execute("select * from usatu where spec=%s and upd =(select max(upd) from usatu) order by advantage desc, usatu.sum desc",(spec,))
-        # в бд данные вроде бы отсорчены в нужном порядке из-за порядка заполнения во время парсинга, но ордер всеравно сделол
+        self.cur.execute("select * from usatu where spec=%s and upd =(select max(upd) from usatu) order by agreed desc, advantage desc, usatu.sum desc",(spec,))
         #select * from usatu where spec=%s and upd =(select max(upd) from usatu)
         ans = self.cur.fetchall()
         return ans
