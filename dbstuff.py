@@ -17,9 +17,22 @@ class DbQuery:
         ans = self.cur.fetchall()
         return ans
 
+    def find_user_upd(self,name, v_time):
+        self.cur.execute("select * from usatu where name = %s and upd = %s",
+                         (name, v_time))
+        ans = self.cur.fetchall()
+        return ans
+
     def get_spec_list(self, spec):
         self.cur.execute("select * from usatu where spec=%s and upd =(select max(upd) from usatu) order by agreed desc, advantage desc, usatu.sum desc",(spec,))
         #select * from usatu where spec=%s and upd =(select max(upd) from usatu)
+        ans = self.cur.fetchall()
+        return ans
+
+    def get_spec_list_upd(self, spec, v_time):
+        self.cur.execute(
+            "select * from usatu where spec=%s and upd = %s order by agreed desc, advantage desc, usatu.sum desc",
+            (spec, v_time))
         ans = self.cur.fetchall()
         return ans
 
@@ -36,18 +49,39 @@ class DbQuery:
         s.headers['Content-Type'] = 'application/x-www-form-urlencoded'
         s.headers['Referer'] = ps.url
         csrf = ps.set_csrftoken(s)
+        count = 0
         for key in ps.specValue:
             page_data = ps.request_page(s, key, csrf)
             print(ps.specValue[key])
             usrs = ps.get_users(page_data)
             for usr in usrs:
                 self.insert_user( usr, key, cTime)
+                count += 1
+        print('inserted {}'.format(count))
 
+    def get_subs(self):
+        self.cur.execute("select * from subs")
+        ans = self.cur.fetchall()
+        return ans
 
+    def get_closest_upd(self, v_time):
+        self.cur.execute("select upd from usatu where upd<=%s order by upd desc limit 1", (v_time,))
+        ans = self.cur.fetchone()
+        return ans
 
+    def insert_sub(self, name, id):
+        self.cur.execute(
+            "INSERT INTO subs (name, t_id) VALUES (%s, %s)",
+            (name, id)
+        )
+        self.conn.commit()
 
-
-
+    def delete_sub(self, id):
+        self.cur.execute(
+            "delete from subs where t_id = '%s'",
+            (id, )
+        )
+        self.conn.commit()
 if __name__ == '__main__':
     q = DbQuery()
     print(q.get_spec_list('168'))
