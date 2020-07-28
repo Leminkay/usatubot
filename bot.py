@@ -4,7 +4,14 @@ import time
 import telebot
 from dbstuff import DbQuery
 from parsetable import specValue
+import re
 
+
+emoji_up = u'\U0001F53A'
+emoji_down = u'\U0001F53B'
+
+
+repattern = r'[^а-яА-Я -]'
 
 def get_position(db, name, spec):
     spec_data = db.get_spec_list(spec)
@@ -12,12 +19,14 @@ def get_position(db, name, spec):
         if spec_data[i][0] == name:
             return i + 1
 
+
 def get_position_upd(db, name, spec, upd):
     spec_data = db.get_spec_list_upd(spec, upd)
     for i in range(len(spec_data)):
         if spec_data[i][0] == name:
             return i + 1
     return -1
+
 
 def loop_update(): #every 2 hours
     while True:
@@ -29,8 +38,10 @@ def loop_update(): #every 2 hours
         print('done updating')
         time.sleep(7200)
 
-emoji_up = u'\U0001F53A'
-emoji_down = u'\U0001F53B'
+
+def filter_name(s):
+    s = re.sub(repattern, '', s)
+    return s
 
 
 def send_message_to_subscribers(): #once a day
@@ -43,12 +54,12 @@ def send_message_to_subscribers(): #once a day
             c_user = db.find_user(sub[0])
             c_pos = []
             for row in c_user:
-                t_pos = get_position(db, sub[0], row[9]) + 1
+                t_pos = get_position(db, sub[0], row[9])
                 c_pos.append([row[9], t_pos])
             p_pos = []
-            answer = ''
+            answer = str(sub[0]) + '\n'
             for i in range(len(c_pos)):
-                t_pos = get_position_upd(db, sub[0], c_pos[i][0], prev_upd) + 1
+                t_pos = get_position_upd(db, sub[0], c_pos[i][0], prev_upd)
                 answer += "\"" + str(specValue[c_pos[i][0]]) + "\"" + ' место: ' + str(c_pos[i][1]) + ' '
                 if t_pos > c_pos[i][1]:
                     answer += emoji_down
@@ -73,12 +84,14 @@ def help_message(message):
 def sub_to_updates(message):
     db = DbQuery()
     name = message.text[11:]
+    name = filter_name(name)
+    print(name)
     result = db.find_user(name)
     if len(result) == 0:
         answer = "Такой Абитуриент не найдет"
     else:
         db.insert_sub(name, message.chat.id)
-        answer = "Вы успешно подписались на рассылку! \n Если хотите отписаться, то просто напишите /unsubscribe"
+        answer = "Вы успешно подписались на рассылку! \nЕсли хотите отписаться, то просто напишите /unsubscribe"
     bot.reply_to(message, answer)
 
 
@@ -92,6 +105,7 @@ def unsub_from_updates(message):
 @bot.message_handler(content_types=['text'])
 def get_name(message):
     db = DbQuery()
+    message.text = filter_name(message.text)
     result = db.find_user(message.text)
     print(message.text)
     answer = ''
