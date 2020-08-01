@@ -110,21 +110,25 @@ def request_page(curSession, specVal, token):
     return r.text
 
 
+
 # get token through get request
 def set_csrftoken(curSession):
+
     r = curSession.get(url)
     soup = BeautifulSoup(r.text, "html.parser")
-    token = soup.find_all('input', type='hidden')[0]['value']
+    try:
+        token = soup.find('input', type='hidden')['value'] #  padaet inogda
+    except Exception:
+        token = r_token
+    print(token)
     return token
 
-"""
+
 s = requests.Session()
 s.headers['Content-Type'] = 'application/x-www-form-urlencoded'
 s.headers['Referer'] = url
+r_token = set_csrftoken(s)
+
 
 # example
-csrftoken = set_csrftoken(s)
-page_text = request_page(s, 203, csrftoken)
-usrs = get_users(page_text)
-print(usrs)
-"""
+

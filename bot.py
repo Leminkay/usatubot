@@ -45,6 +45,11 @@ def filter_name(s):
 
 
 def send_message_to_subscribers(): #once a day
+    now = datetime.now()
+    if now.hour != 12:
+        wait = (12 + 24 - now.hour) % 24
+        print('waiting {}'.format(wait))
+        time.sleep(wait * 60 * 60)
     while True:
         db = DbQuery()
         subs = db.get_subs()
@@ -62,16 +67,16 @@ def send_message_to_subscribers(): #once a day
                 t_pos = get_position_upd(db, sub[0], c_pos[i][0], prev_upd)
                 answer += "\"" + str(specValue[c_pos[i][0]]) + "\"" + ' место: ' + str(c_pos[i][1]) + ' '
                 if t_pos > c_pos[i][1]:
-                    answer += emoji_down
-                elif t_pos < c_pos[i][1]:
                     answer += emoji_up
+                elif t_pos < c_pos[i][1]:
+                    answer += emoji_down
                 answer += '\n'
             bot.send_message(sub[1], answer)
 
         time.sleep(86400)
 
 
-TOKEN = '1394904859:AAG--El2aQs5XPNnZl9LvD2gQaGpsFmXik4'
+TOKEN = '1394904859:AAHB20AKGbftx18viRwrrv8CXXiPM3a5Cjk'
 bot = telebot.TeleBot(TOKEN)
 
 
